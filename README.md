@@ -9,7 +9,7 @@ Project for laboratory classes at the Poznan University of Technology.
 - WebRTC
 - Typescript
 
-###__Maintainers__
+### __Maintainers__
 - Dziurzyński Miłosz
 - Gawiński Wojciech
 - Kmiotek Jarosław
