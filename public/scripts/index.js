@@ -6,13 +6,11 @@ const existingCalls = [];
 const { RTCPeerConnection, RTCSessionDescription } = window;
 
 const peerConnection = new RTCPeerConnection({
-  iceServers: [{
-    urls: "stun:stun.l.google.com:19302",
-    urls: "stun:stun1.l.google.com:19302",
-    urls: "stun:stun2.l.google.com:19302",
-    urls: "stun:stun3.l.google.com:19302",
-    urls: "stun:stun4.l.google.com:19302"
-  }]
+  iceServers: [{ url: 'stun:stun.l.google.com:19302' },
+  { url: 'stun:stun1.l.google.com:19302' },
+  { url: 'stun:stun2.l.google.com:19302' },
+  { url: 'stun:stun3.l.google.com:19302' },
+  { url: 'stun:stun4.l.google.com:19302' }]
 });
 
 function unselectUsersFromList() {
