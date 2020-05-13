@@ -5,7 +5,15 @@ const existingCalls = [];
 
 const { RTCPeerConnection, RTCSessionDescription } = window;
 
-const peerConnection = new RTCPeerConnection();
+const peerConnection = new RTCPeerConnection({
+  iceServers: [{
+    urls: "stun:stun.l.google.com:19302",
+    urls: "stun:stun1.l.google.com:19302",
+    urls: "stun:stun2.l.google.com:19302",
+    urls: "stun:stun3.l.google.com:19302",
+    urls: "stun:stun4.l.google.com:19302"
+  }]
+});
 
 function unselectUsersFromList() {
   const alreadySelectedUser = document.querySelectorAll(
@@ -63,7 +71,7 @@ function updateUserList(socketIds) {
   });
 }
 
-const socket = io.connect("avc.panfu.pw");
+const socket = io.connect("https://avc.panfu.pw", { secure: true, transports: ['websocket'] });
 
 socket.on("update-user-list", ({ users }) => {
   updateUserList(users);
