@@ -22,6 +22,8 @@ import { UserUpdatedResponse } from "./messages/userUpdatedResponse";
 import { SignalEvent } from "./redisEvents/signalEvent";
 import { SignalUserResponse } from "./messages/signalUserResponse";
 import { SignalUserRequest } from "./messages/signalUserRequest";
+import { CreateRoomResponse } from "./messages/createRoomResponse";
+import { JoinRoomResponse } from "./messages/joinRoomResponse";
 
 export class Server {
     private httpServer: HTTPServer;
@@ -63,11 +65,12 @@ export class Server {
         return null;
     }
     private handleSocketConnection() {
-        this.io.on("connection", socket => {
+        this.io.on("connection", (socket) => {
             let user = new User(uuidv4());
             let room: Room;
 
-            var redisCallback = async (channel: string, json: string) => {
+            let redisCallback = async (channel: string, json: string) => {
+                if (!room) return;
                 let _room = await this.GetRoom(room.id);
                 if (_room != null) {
                     room = _room;
@@ -77,8 +80,8 @@ export class Server {
                     this.OnRedisEvent(socket, user, room, evt);
                 }
             }
-
             socket.on("disconnect", async () => {
+                if (!room) return;
                 this.db.publish(room.id + "_event", JSON.stringify(new UserLeftEvent(user.id)));
                 this.subscriber.off("message", redisCallback);
                 let _room = await this.GetRoom(room.id);
@@ -98,6 +101,7 @@ export class Server {
                 room.users.push(user);
                 this.db.set(room.id, JSON.stringify(room));
                 this.subscriber.subscribe(room.id + "_event");
+                socket.emit("create_room", new CreateRoomResponse(room.id));
             });
             socket.on("join_room", async (data: JoinRoomRequest) => {
                 let _room = await this.GetRoom(data.roomId);
@@ -107,6 +111,7 @@ export class Server {
                     this.db.set(room.id, JSON.stringify(room));
                     this.subscriber.subscribe(room.id + "_event");
                     this.db.publish(room.id + "_event", JSON.stringify(new UserJoinedEvent(user)));
+                    socket.emit("join_room", new JoinRoomResponse(room.id));
                 } else {
                     socket.emit("join_room_error", new JoinRoomError(data.roomId, "Room could not be found or the meeting is gone."));
                 }
@@ -123,7 +128,7 @@ export class Server {
                 let evt = new SignalEvent(user.id, data.userId, data.sdp);
                 this.db.publish(room.id + "_event", JSON.stringify(evt));
             });
-            this.subscriber.on("message", redisCallback);
+            this.subscriber.on("message", (channel: string, json: string) => redisCallback(channel, json));
 
         });
     }
