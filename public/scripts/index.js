@@ -63,7 +63,7 @@ function updateUserList(socketIds) {
   });
 }
 
-const socket = io.connect("192.168.1.103:5000");
+const socket = io.connect("avc.panfu.pw");
 
 socket.on("update-user-list", ({ users }) => {
   updateUserList(users);
