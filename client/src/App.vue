@@ -1,32 +1,50 @@
 <template>
-  <div id="app">
-    <div id="nav">
-      <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
+  <div class="container is-fluid is-marginless wrapper">
+    <NavBar id="navbar" class="navbarContainer"></NavBar>
+    <div id="content">
+      <router-view/>
     </div>
-    <router-view/>
+    <Footer id="footer" class="is-paddingless footerContainer"></Footer>
   </div>
 </template>
 
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
+<script lang="ts">
+  import {Component, Vue} from 'vue-property-decorator';
+  import NavBar from "./components/layout/NavBar.vue"
+  import Footer from "@/components/layout/Footer.vue"
 
-#nav {
-  padding: 30px;
-}
+  @Component({
+    components: {
+      NavBar,
+      Footer
+    }
+  })
+  export default class App extends Vue {
+    //
+  }
+</script>
 
-#nav a {
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-#nav a.router-link-exact-active {
-  color: #42b983;
-}
+<style scoped>
+  #content {
+    height: 80vh;
+  }
+  body {
+    height: 100vh;
+  }
+  .wrapper {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .navbarContainer {
+    height: 10vh;
+    flex-grow: 0;
+  }
+  .footerContainer {
+    height: 10vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 </style>
