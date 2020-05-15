@@ -1,0 +1,26 @@
+{
+  "name": "ptl-gatewayserver",
+  "version": "1.0.0",
+  "description": "WebRTC Gateway Server",
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "dev": "nodemon --watch 'src/**/*.ts' --exec ts-node-dev src/index.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/express": "^4.17.6",
+    "@types/ioredis": "^4.16.2",
+    "@types/uuid": "^7.0.3",
+    "ts-node-dev": "^1.0.0-pre.44"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "ioredis": "^4.16.3",
+    "redis-json": "^3.2.1",
+    "uuid": "^8.0.0",
+    "nodemon": "^2.0.3",
+    "ts-node": "^8.10.1",
+    "typescript": "^3.9.2"
+  }
+}
