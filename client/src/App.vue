@@ -25,6 +25,8 @@
 </script>
 
 <style scoped>
+  @import "https://cdn.materialdesignicons.com/2.5.94/css/materialdesignicons.min.css";
+
   #content {
     height: 80vh;
   }

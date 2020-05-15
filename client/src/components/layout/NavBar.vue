@@ -6,19 +6,34 @@
                 LiveKOKOS
             </b-navbar-item>
         </template>
-        
-         <template slot="end">
+
+         <template slot="end" v-if="isVideoChat">
             <b-navbar-item tag="div">
                 <div class="buttons">
-                    <a class="button is-warning is-medium">
-                        <strong>Skopiuj link do konferencji</strong>
-                    </a>
+                    <b-button rounded size="is-medium" class="is-primary">
+                        Skopiuj link do konferencji
+                    </b-button>
                 </div>
             </b-navbar-item>
         </template>
     </b-navbar>
 </div>
 </template>
+
+<script lang="ts">
+    import {Component, Vue} from 'vue-property-decorator'
+
+    @Component({
+        computed: {
+            isVideoChat() {
+                return this.$route.name == 'Video Call';
+            }
+        }
+    })
+    export default class NavBar extends Vue {
+        //
+    }
+</script>
 
 <style scoped>
     .logo {
