@@ -6,6 +6,7 @@ import { JoinRoomRequest } from "./messages/joinRoomRequest";
 import Redis from "ioredis";
 import JSONCache from 'redis-json';
 import kurento from 'kurento-client';
+import register from 'kurento-client';
 import { Room } from "./room";
 import { ChangeNameRequest } from "./messages/changeNameRequest";
 import { User } from "./user";
@@ -136,20 +137,22 @@ export class Server {
                         let endpoint = await room.pipeline.create('WebRtcEndpoint');
                         endpoint.setMaxVideoRecvBandwidth(300);
                         endpoint.setMinVideoRecvBandwidth(100);
+                        user.incomingMedia.set(targetUser.id, endpoint);
+
                         if (user.iceCandidates.has(targetUser.id)) {
                             let iceCandidateQueue = user.iceCandidates.get(targetUser.id);
                             while (iceCandidateQueue.length) {
                                 let message = iceCandidateQueue.shift();
                                 console.log(`user: ${user.id} collect candidate for ${message.target}`);
-                                //tofix
-                                //endpoint.addIceCandidate(new RTCIceCandidate(message.candidate));
+                                endpoint.addIceCandidate(message.candidate);
                             }
                         }
                         endpoint.on('OnIceCandidate', event => {
                             // console.log(`generate incoming media candidate: ${userSession.id} from ${sender.id}`);
-                            socket.emit('ice_candidate', new IceCandidateMessage(targetUser.id, event.candidate));
+                            let candidate = register.getComplexType("IceCandidate")(event.candidate) as RTCIceCandidate;
+                            socket.emit('ice_candidate', new IceCandidateMessage(targetUser.id, candidate));
                         });
-                        user.incomingMedia.set(targetUser.id, endpoint);
+                        await targetUser.outgoingMedia.connect(endpoint);
                     }
                 }
             });
