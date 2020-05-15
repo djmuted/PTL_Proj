@@ -131,10 +131,12 @@ export class Server {
                 this.SendRoom(room, "chat_message", new ChatMessageResponse(user.id, data.message), user);
             });
             socket.on("receive_from", async (data: ReceiveFeedRequest) => {
+                if (!room) return;
                 let targetUser = room.users.get(data.target);
                 if (targetUser) {
+                    let endpoint: kurento.WebRtcEndpoint;
                     if (!user.incomingMedia.has(targetUser.id)) {
-                        let endpoint = await room.pipeline.create('WebRtcEndpoint');
+                        endpoint = await room.pipeline.create('WebRtcEndpoint');
                         endpoint.setMaxVideoRecvBandwidth(300);
                         endpoint.setMinVideoRecvBandwidth(100);
                         user.incomingMedia.set(targetUser.id, endpoint);
@@ -153,6 +155,38 @@ export class Server {
                             socket.emit('ice_candidate', new IceCandidateMessage(targetUser.id, candidate));
                         });
                         await targetUser.outgoingMedia.connect(endpoint);
+                    } else {
+                        console.log(`user: ${user.id} get existing endpoint to receive video from: ${targetUser.id}`);
+                        endpoint = user.incomingMedia.get(targetUser.id);
+                        await targetUser.outgoingMedia.connect(endpoint);
+                    }
+                    let sdpAnswer = await endpoint.processOffer(data.sdp);
+                    socket.emit("receive_video_answer", new ReceiveFeedRequest(sdpAnswer, data.target));
+                    await endpoint.gatherCandidates();
+                }
+            });
+            socket.on("on_ice_candidate", async (data: IceCandidateMessage) => {
+                if (!room) return;
+                let candidate = register.getComplexType('IceCandidate')(data.candidate) as RTCIceCandidate;
+                if (data.target == user.id) {
+                    if (user.outgoingMedia) {
+                        console.log(` add candidate to self : %s`, data.target);
+                        user.outgoingMedia.addIceCandidate(candidate);
+                    } else {
+                        console.log(` still does not have outgoing endpoint for ${data.target}`);
+                        user.iceCandidates.get(data.target).push(new IceCandidateMessage(data.target, candidate));
+                    }
+                } else {
+                    if (user.incomingMedia.has(data.target)) {
+                        let webRtc = user.incomingMedia.get(data.target);
+                        console.log(`%s add candidate to from %s`, user.id, data.target);
+                        webRtc.addIceCandidate(candidate);
+                    } else {
+                        console.log(`${user.id} still does not have endpoint for ${data.target}`);
+                        if (!user.iceCandidates.has(data.target)) {
+                            user.iceCandidates.set(data.target, []);
+                        }
+                        user.iceCandidates.get(data.target).push(new IceCandidateMessage(data.target, candidate));
                     }
                 }
             });
