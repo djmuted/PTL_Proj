@@ -1,11 +1,13 @@
 import socketIO from "socket.io";
 import { WebRtcEndpoint } from "kurento-client";
 import { IceCandidateMessage } from "./iceCandidateMessage";
+import { Room } from "./room";
 
 export class User {
     public id: string;
     public name: string;
     public socket: socketIO.Socket;
+    public room: Room;
     public incomingMedia: Map<string, WebRtcEndpoint>;
     public outgoingMedia: WebRtcEndpoint;
     public iceCandidates: Map<string, Array<IceCandidateMessage>>;

@@ -5,8 +5,6 @@ import path from "path";
 import { JoinRoomRequest } from "./messages/joinRoomRequest";
 import Redis from "ioredis";
 import JSONCache from 'redis-json';
-import kurento from 'kurento-client';
-import register from 'kurento-client';
 import { Room } from "./room";
 import { ChangeNameRequest } from "./messages/changeNameRequest";
 import { User } from "./user";
@@ -22,7 +20,7 @@ import { CreateRoomResponse } from "./messages/createRoomResponse";
 import { JoinRoomResponse } from "./messages/joinRoomResponse";
 import { UserJoinedResponse } from "./messages/userJoinedResponse";
 import { ReceiveFeedRequest } from "./messages/receiveFeedRequest";
-import { IceCandidateMessage } from "./iceCandidateMessage";
+import { WebRTC } from "./webRTC";
 
 export class Server {
     private id: string;
@@ -30,10 +28,9 @@ export class Server {
     private app: Application;
     private io: SocketIOServer;
     private db: Redis.Redis;
-    private kurento: kurento.ClientInstance;
+    private webRTC: WebRTC;
 
     private readonly DEFAULT_PORT = 5000;
-    private readonly KURENTO_WS = 'ws://localhost:8890/kurento';
 
     private rooms: Map<string, Room>;
 
@@ -44,16 +41,14 @@ export class Server {
         this.httpServer = createServer(this.app);
         this.io = socketIO(this.httpServer);
         this.db = new Redis();
+        this.webRTC = new WebRTC();
 
-        this.configureKurento();
+        this.webRTC.ConfigureWebRTC();
         this.configureApp();
         this.configureRoutes();
         this.handleSocketConnection();
     }
 
-    private async configureKurento() {
-        this.kurento = await kurento(this.KURENTO_WS);
-    }
     private configureApp(): void {
         this.app.use(express.static(path.join(__dirname, "../public")));
     }
@@ -65,7 +60,7 @@ export class Server {
     }
     private async CreateRoom(owner: User) {
         let room = new Room(uuidv4(), owner);
-        room.pipeline = await this.kurento.create('MediaPipeline');
+        this.webRTC.OnCreateRoom(room);
         this.rooms.set(room.id, room);
         await this.db.set("room:" + room.id, this.id);
         return room;
@@ -75,7 +70,7 @@ export class Server {
             _user.socket.disconnect()
         }
         this.rooms.delete(room.id);
-        room.pipeline.close();
+        this.webRTC.OnRemoveRoom(room);
         await this.db.del("room:" + room.id);
     }
     private async SendRoom(room: Room, key: string, value: any, excluseUser?: User) {
@@ -87,109 +82,49 @@ export class Server {
     private handleSocketConnection() {
         this.io.on("connection", socket => {
             let user = new User(uuidv4(), socket);
-            let room: Room;
 
             socket.on("disconnect", async () => {
-                if (room) {
-                    room.users.delete(user.id);
-                    this.SendRoom(room, "user_left", new UserLeftResponse(user.id));
-                    if (!room.users.size) {
-                        this.RemoveRoom(room);
+                if (user.room) {
+                    user.room.users.delete(user.id);
+                    this.SendRoom(user.room, "user_left", new UserLeftResponse(user.id));
+                    if (!user.room.users.size) {
+                        this.RemoveRoom(user.room);
                     }
                 }
             });
             socket.on("create_room", async () => {
-                room = await this.CreateRoom(user);
+                let room = await this.CreateRoom(user);
                 room.users.set(user.id, user);
+                user.room = room;
+                this.webRTC.OnJoinRoom(user, room);
                 socket.emit("create_room", new CreateRoomResponse(room.id));
             });
             socket.on("join_room", async (data: JoinRoomRequest) => {
                 if (this.rooms.has(data.roomId)) {
-                    room = this.rooms.get(data.roomId);
-                    room.users.set(user.id, user);
-                    user.outgoingMedia = await room.pipeline.create('WebRtcEndpoint');
-                    user.outgoingMedia.setMaxVideoRecvBandwidth(300);
-                    user.outgoingMedia.setMinVideoRecvBandwidth(100);
+                    user.room = this.rooms.get(data.roomId);
+                    user.room.users.set(user.id, user);
+                    this.webRTC.OnJoinRoom(user, user.room);
 
-                    socket.emit("join_room", new JoinRoomResponse(room.id));
-                    this.SendRoom(room, "user_joined", new UserJoinedResponse(user), user);
+                    socket.emit("join_room", new JoinRoomResponse(user.room));
+                    this.SendRoom(user.room, "user_joined", new UserJoinedResponse(user), user);
                 } else {
                     socket.emit("join_room_error", new JoinRoomError(data.roomId, "Room could not be found or the meeting has ended."));
                 }
             });
             socket.on("remove_room", () => {
-                if (!room) return;
-                if (room.owner == user)
-                    this.RemoveRoom(room);
+                if (!user.room) return;
+                if (user.room.owner == user)
+                    this.RemoveRoom(user.room);
             });
             socket.on("change_name", (data: ChangeNameRequest) => {
                 user.name = data.name;
-                this.SendRoom(room, "user_updated", new UserUpdatedResponse(user));
+                this.SendRoom(user.room, "user_updated", new UserUpdatedResponse(user));
             });
             socket.on("chat_message", (data: ChatMessageRequest) => {
-                if (!room) return;
-                this.SendRoom(room, "chat_message", new ChatMessageResponse(user.id, data.message), user);
+                if (!user.room) return;
+                this.SendRoom(user.room, "chat_message", new ChatMessageResponse(user.id, data.message), user);
             });
-            socket.on("receive_from", async (data: ReceiveFeedRequest) => {
-                if (!room) return;
-                let targetUser = room.users.get(data.target);
-                if (targetUser) {
-                    let endpoint: kurento.WebRtcEndpoint;
-                    if (!user.incomingMedia.has(targetUser.id)) {
-                        endpoint = await room.pipeline.create('WebRtcEndpoint');
-                        endpoint.setMaxVideoRecvBandwidth(300);
-                        endpoint.setMinVideoRecvBandwidth(100);
-                        user.incomingMedia.set(targetUser.id, endpoint);
-
-                        if (user.iceCandidates.has(targetUser.id)) {
-                            let iceCandidateQueue = user.iceCandidates.get(targetUser.id);
-                            while (iceCandidateQueue.length) {
-                                let message = iceCandidateQueue.shift();
-                                console.log(`user: ${user.id} collect candidate for ${message.target}`);
-                                endpoint.addIceCandidate(message.candidate);
-                            }
-                        }
-                        endpoint.on('OnIceCandidate', event => {
-                            // console.log(`generate incoming media candidate: ${userSession.id} from ${sender.id}`);
-                            let candidate = register.getComplexType("IceCandidate")(event.candidate) as RTCIceCandidate;
-                            socket.emit('ice_candidate', new IceCandidateMessage(targetUser.id, candidate));
-                        });
-                        await targetUser.outgoingMedia.connect(endpoint);
-                    } else {
-                        console.log(`user: ${user.id} get existing endpoint to receive video from: ${targetUser.id}`);
-                        endpoint = user.incomingMedia.get(targetUser.id);
-                        await targetUser.outgoingMedia.connect(endpoint);
-                    }
-                    let sdpAnswer = await endpoint.processOffer(data.sdp);
-                    socket.emit("receive_video_answer", new ReceiveFeedRequest(sdpAnswer, data.target));
-                    await endpoint.gatherCandidates();
-                }
-            });
-            socket.on("on_ice_candidate", async (data: IceCandidateMessage) => {
-                if (!room) return;
-                let candidate = register.getComplexType('IceCandidate')(data.candidate) as RTCIceCandidate;
-                if (data.target == user.id) {
-                    if (user.outgoingMedia) {
-                        console.log(` add candidate to self : %s`, data.target);
-                        user.outgoingMedia.addIceCandidate(candidate);
-                    } else {
-                        console.log(` still does not have outgoing endpoint for ${data.target}`);
-                        user.iceCandidates.get(data.target).push(new IceCandidateMessage(data.target, candidate));
-                    }
-                } else {
-                    if (user.incomingMedia.has(data.target)) {
-                        let webRtc = user.incomingMedia.get(data.target);
-                        console.log(`%s add candidate to from %s`, user.id, data.target);
-                        webRtc.addIceCandidate(candidate);
-                    } else {
-                        console.log(`${user.id} still does not have endpoint for ${data.target}`);
-                        if (!user.iceCandidates.has(data.target)) {
-                            user.iceCandidates.set(data.target, []);
-                        }
-                        user.iceCandidates.get(data.target).push(new IceCandidateMessage(data.target, candidate));
-                    }
-                }
-            });
+            this.webRTC.ConfigureHandlers(user);
         });
     }
     public listen(callback: (port: number) => void): void {
