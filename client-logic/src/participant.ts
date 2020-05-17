@@ -19,8 +19,8 @@ export class Participant {
         this.video.controls = false;
         document.getElementById('videos').appendChild(this.video);
     }
-    public receiveVideo(socket: SocketIOClient.Socket) {
-        var constraints = {
+    public sendVideo(socket: SocketIOClient.Socket) {
+        let constraints = {
             audio: true,
             video: {
                 mandatory: {
@@ -30,12 +30,27 @@ export class Participant {
                 }
             }
         };
-        var options = {
+        let options = {
             localVideo: this.video,
             mediaConstraints: constraints,
-            onicecandidate: (candidate: RTCIceCandidate, _: any) => this.onIceCandidate(candidate, socket)
+            onicecandidate: (candidate: RTCIceCandidate, _: any) => this.onIceCandidate(candidate, socket),
+            configuration: { iceServers: [{ "urls": "stun:stun.l.google.com:19302" }] }
         }
         this.rtcPeer = kurentoUtils.WebRtcPeer.WebRtcPeerSendonly(options, (error) => {
+            if (error) {
+                console.error(error);
+                return;
+            }
+            this.rtcPeer.generateOffer((error: string, offerSdp: string) => this.offerToReceiveVideo(error, offerSdp, socket));
+        });
+    }
+    public receiveVideo(socket: SocketIOClient.Socket) {
+        let options = {
+            remoteVideo: this.video,
+            onicecandidate: (candidate: RTCIceCandidate, _: any) => this.onIceCandidate(candidate, socket),
+            configuration: { iceServers: [{ "urls": "stun:stun.l.google.com:19302" }] }
+        }
+        this.rtcPeer = kurentoUtils.WebRtcPeer.WebRtcPeerRecvonly(options, (error) => {
             if (error) {
                 console.error(error);
                 return;

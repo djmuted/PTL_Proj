@@ -39,13 +39,21 @@ export class WebRTC {
             user.socket.emit('ice_candidate', new IceCandidateMessage(user.id, candidate));
         });
     }
+    private getEndpointForUser(user: User, target: string) {
+        if (user.id == target) {
+            return user.outgoingMedia;
+        }
+
+    }
     public ConfigureHandlers(user: User) {
         user.socket.on("receive_from", async (data: ReceiveFeedRequest) => {
             if (!user.room) return;
             let targetUser = user.room.users.get(data.target);
             if (targetUser) {
                 let endpoint: kurento.WebRtcEndpoint;
-                if (!user.incomingMedia.has(targetUser.id)) {
+                if (user.id == data.target) {
+                    endpoint = user.outgoingMedia;
+                } else if (!user.incomingMedia.has(targetUser.id)) {
                     endpoint = await user.room.pipeline.create('WebRtcEndpoint');
                     endpoint.setMaxVideoRecvBandwidth(300);
                     endpoint.setMinVideoRecvBandwidth(100);

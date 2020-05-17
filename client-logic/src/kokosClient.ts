@@ -69,7 +69,9 @@ export class KokosClient {
         this.socket.on("create_room", (data: CreateRoomResponse) => {
             console.log(`room created, id: ${data.id}`);
             this.participants = new Map<string, Participant>();
-            this.participants.set(data.owner.id, new Participant(data.owner));
+            let participant = new Participant(data.owner);
+            this.participants.set(data.owner.id, participant);
+            participant.sendVideo(this.socket);
             this.user = data.owner;
         });
         this.socket.on("join_room", (data: JoinRoomResponse) => {
@@ -79,7 +81,11 @@ export class KokosClient {
             for (let userData of data.users) {
                 let participant = new Participant(userData);
                 this.participants.set(userData.id, participant);
-                participant.receiveVideo(this.socket);
+                if (participant.userData.id == this.user.id) {
+                    participant.sendVideo(this.socket);
+                } else {
+                    participant.receiveVideo(this.socket);
+                }
             }
         });
         this.socket.on("chat_message", (data: ChatMessageResponse) => {
@@ -101,10 +107,12 @@ export class KokosClient {
         });
         this.socket.on("ice_candidate", (data: IceCandidateMessage) => {
             console.log(`ice candidate for user: ${data.target}.`);
+            //console.log(data.candidate);
             this.participants.get(data.target).rtcPeer.addIceCandidate(data.candidate);
         });
         this.socket.on("receive_video_answer", (data: ReceiveFeedRequest) => {
-            console.log(`ice candidate for user: ${data.target}.`);
+            console.log(`receive video from user: ${data.target}.`);
+            //console.log(data.sdp);
             this.participants.get(data.target).rtcPeer.processAnswer(data.sdp);
         });
     }
