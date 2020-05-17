@@ -20,7 +20,7 @@ export class WebRTC {
         room.pipeline = await this.kurento.create('MediaPipeline');
     }
     public async OnRemoveRoom(room: Room) {
-        room.pipeline.close();
+        (room.pipeline as any).release(); //broken typings
     }
     public async OnJoinRoom(user: User, room: Room) {
         user.outgoingMedia = await room.pipeline.create('WebRtcEndpoint');

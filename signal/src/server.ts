@@ -1,7 +1,8 @@
 import express, { Application, json } from "express";
 import socketIO, { Server as SocketIOServer } from "socket.io";
-import { createServer, Server as HTTPServer } from "http";
+import { createServer, Server as HTTPSServer } from "https";
 import path from "path";
+import * as fs from "fs";
 import { JoinRoomRequest } from "./messages/joinRoomRequest";
 import Redis from "ioredis";
 import JSONCache from 'redis-json';
@@ -21,10 +22,11 @@ import { JoinRoomResponse } from "./messages/joinRoomResponse";
 import { UserJoinedResponse } from "./messages/userJoinedResponse";
 import { ReceiveFeedRequest } from "./messages/receiveFeedRequest";
 import { WebRTC } from "./webRTC";
+import { UserData } from "./userData";
 
 export class Server {
     private id: string;
-    private httpServer: HTTPServer;
+    private httpServer: HTTPSServer;
     private app: Application;
     private io: SocketIOServer;
     private db: Redis.Redis;
@@ -38,7 +40,13 @@ export class Server {
         this.id = uuidv4();
         this.rooms = new Map<string, Room>();
         this.app = express();
-        this.httpServer = createServer(this.app);
+
+        var privateKey = fs.readFileSync('cert/selfsigned.key', 'utf8');
+        var certificate = fs.readFileSync('cert/selfsigned.crt', 'utf8');
+
+        var credentials = { key: privateKey, cert: certificate };
+
+        this.httpServer = createServer(credentials, this.app);
         this.io = socketIO(this.httpServer);
         this.db = new Redis();
         this.webRTC = new WebRTC();
@@ -60,7 +68,7 @@ export class Server {
     }
     private async CreateRoom(owner: User) {
         let room = new Room(uuidv4(), owner);
-        this.webRTC.OnCreateRoom(room);
+        await this.webRTC.OnCreateRoom(room);
         this.rooms.set(room.id, room);
         await this.db.set("room:" + room.id, this.id);
         return room;
@@ -82,7 +90,6 @@ export class Server {
     private handleSocketConnection() {
         this.io.on("connection", socket => {
             let user = new User(uuidv4(), socket);
-
             socket.on("disconnect", async () => {
                 if (user.room) {
                     user.room.users.delete(user.id);
@@ -97,7 +104,7 @@ export class Server {
                 room.users.set(user.id, user);
                 user.room = room;
                 this.webRTC.OnJoinRoom(user, room);
-                socket.emit("create_room", new CreateRoomResponse(room.id));
+                socket.emit("create_room", new CreateRoomResponse(room.id, new UserData(user)));
             });
             socket.on("join_room", async (data: JoinRoomRequest) => {
                 if (this.rooms.has(data.roomId)) {
@@ -105,8 +112,8 @@ export class Server {
                     user.room.users.set(user.id, user);
                     this.webRTC.OnJoinRoom(user, user.room);
 
-                    socket.emit("join_room", new JoinRoomResponse(user.room));
-                    this.SendRoom(user.room, "user_joined", new UserJoinedResponse(user), user);
+                    socket.emit("join_room", new JoinRoomResponse(user.room, new UserData(user)));
+                    this.SendRoom(user.room, "user_joined", new UserJoinedResponse(new UserData(user)), user);
                 } else {
                     socket.emit("join_room_error", new JoinRoomError(data.roomId, "Room could not be found or the meeting has ended."));
                 }
@@ -118,7 +125,7 @@ export class Server {
             });
             socket.on("change_name", (data: ChangeNameRequest) => {
                 user.name = data.name;
-                this.SendRoom(user.room, "user_updated", new UserUpdatedResponse(user));
+                this.SendRoom(user.room, "user_updated", new UserUpdatedResponse(new UserData(user)));
             });
             socket.on("chat_message", (data: ChatMessageRequest) => {
                 if (!user.room) return;

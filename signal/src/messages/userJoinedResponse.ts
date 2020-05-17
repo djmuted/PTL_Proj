@@ -1,9 +1,9 @@
-import { User } from "../user";
+import { UserData } from "../userData";
 
 export class UserJoinedResponse {
-    public user: User;
+    public user: UserData;
 
-    constructor(_user: User) {
+    constructor(_user: UserData) {
         this.user = _user;
     }
 }
