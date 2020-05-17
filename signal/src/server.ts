@@ -1,8 +1,7 @@
 import express, { Application, json } from "express";
 import socketIO, { Server as SocketIOServer } from "socket.io";
-import { createServer, Server as HTTPSServer } from "https";
+import { createServer, Server as HTTPServer } from "http";
 import path from "path";
-import * as fs from "fs";
 import { JoinRoomRequest } from "./messages/joinRoomRequest";
 import Redis from "ioredis";
 import JSONCache from 'redis-json';
@@ -26,7 +25,7 @@ import { UserData } from "./userData";
 
 export class Server {
     private id: string;
-    private httpServer: HTTPSServer;
+    private httpServer: HTTPServer;
     private app: Application;
     private io: SocketIOServer;
     private db: Redis.Redis;
@@ -40,13 +39,7 @@ export class Server {
         this.id = uuidv4();
         this.rooms = new Map<string, Room>();
         this.app = express();
-
-        var privateKey = fs.readFileSync('cert/selfsigned.key', 'utf8');
-        var certificate = fs.readFileSync('cert/selfsigned.crt', 'utf8');
-
-        var credentials = { key: privateKey, cert: certificate };
-
-        this.httpServer = createServer(credentials, this.app);
+        this.httpServer = createServer(this.app);
         this.io = socketIO(this.httpServer);
         this.db = new Redis();
         this.webRTC = new WebRTC();
