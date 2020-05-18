@@ -62,7 +62,4 @@ export class Participant {
     public offerToReceiveVideo(error: string, offerSdp: string, socket: SocketIOClient.Socket) {
         socket.emit("receive_from", new ReceiveFeedRequest(offerSdp, this.userData.id));
     }
-    public dispose() {
-        document.getElementById('videos').removeChild(this.video);
-    }
 }

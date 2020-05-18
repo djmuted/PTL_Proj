@@ -128,7 +128,6 @@ export class KokosClient extends Dispatcher {
         });
         this.socket.on("user_left", (data: UserLeftResponse) => {
             //console.log(`user ${data.user} left.`);
-            this.participants.get(data.user).dispose();
             this.participants.delete(data.user);
             this.dispatchEvent(KokosEvents.USER_LEFT, data);
         });
