@@ -12,12 +12,10 @@ export class Participant {
     constructor(_userData: UserData) {
         this.userData = _userData;
 
-        //to remove later
         this.video = document.createElement('video');
         this.video.id = 'video-' + this.userData.id;
         this.video.autoplay = true;
         this.video.controls = false;
-        document.getElementById('videos').appendChild(this.video);
     }
     public sendVideo(socket: SocketIOClient.Socket) {
         let constraints = {
@@ -63,5 +61,8 @@ export class Participant {
     }
     public offerToReceiveVideo(error: string, offerSdp: string, socket: SocketIOClient.Socket) {
         socket.emit("receive_from", new ReceiveFeedRequest(offerSdp, this.userData.id));
+    }
+    public dispose() {
+        document.getElementById('videos').removeChild(this.video);
     }
 }
