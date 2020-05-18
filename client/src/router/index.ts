@@ -6,12 +6,12 @@ Vue.use(VueRouter)
 
   const routes: Array<RouteConfig> = [
   {
-    path: '/form',
+    path: '/',
     name: 'Nick Form',
     component: () => import(/* webpackChunkName: "about" */ '../views/NickForm.vue')
   },
   {
-    path: '/',
+    path: '/call',
     name: 'Video Call',
     // route level code-splitting
     // this generates a separate chunk (about.[hash].js) for this route
