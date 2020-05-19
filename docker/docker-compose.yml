@@ -1,0 +1,17 @@
+version: '3'
+services:
+  ptl-media:
+    build: media
+    expose:
+    - "8888"
+  ptl-db:
+    image: redis
+    expose:
+    - "6379"
+  ptl-signal:
+    build: signal
+    ports:
+    - "5051:80"
+    depends_on:
+    - ptl-media
+    - ptl-db
