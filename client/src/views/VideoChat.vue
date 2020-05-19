@@ -12,22 +12,24 @@
 </template>
 
 <script lang="ts">
-import {Component, Vue} from "vue-property-decorator";
+import { Component, Vue } from "vue-property-decorator";
 import VideoBox from "@/components/video/VideoBox.vue";
 import ChatBox from "@/components/chat/ChatBox.vue";
-import NickPrompt from "@/components/utils/NickPrompt.vue"
+import NickPrompt from "@/components/utils/NickPrompt.vue";
 import { KokosClient, KokosEvents } from "ptl-client/src/kokosClient";
 
 @Component({
   components: {
-    VideoBox, ChatBox
+    VideoBox,
+    ChatBox
   }
 })
 export default class VideoChat extends Vue {
-
+  private kokos: KokosClient;
   created() {
-    let nickPrompt = new NickPrompt()
+    let nickPrompt = new NickPrompt();
     nickPrompt.prompt();
+    this.kokos = new KokosClient(window.location.origin);
   }
 }
 </script>
