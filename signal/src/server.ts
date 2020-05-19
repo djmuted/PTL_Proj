@@ -31,7 +31,7 @@ export class Server {
     private db: Redis.Redis;
     private webRTC: WebRTC;
 
-    private readonly DEFAULT_PORT = 5000;
+    private readonly DEFAULT_PORT = parseInt(process.env.PORT) || 5000;
 
     private rooms: Map<string, Room>;
 
@@ -41,7 +41,11 @@ export class Server {
         this.app = express();
         this.httpServer = createServer(this.app);
         this.io = socketIO(this.httpServer);
-        this.db = new Redis();
+        if (process.env.REDIS_IP) {
+            this.db = new Redis(parseInt(process.env.REDIS_PORT) || 6379, process.env.REDIS_IP);
+        } else {
+            this.db = new Redis();
+        }
         this.webRTC = new WebRTC();
 
         this.webRTC.ConfigureWebRTC();

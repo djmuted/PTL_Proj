@@ -8,10 +8,12 @@ import { IceCandidateMessage } from './iceCandidateMessage';
 export class WebRTC {
     private kurento: kurento.ClientInstance;
 
-    private readonly KURENTO_WS = 'ws://localhost:8890/kurento';
+    private KURENTO_WS = 'ws://localhost:8890/kurento';
 
     constructor() {
-
+        if (process.env.KURENTO_WS) {
+            this.KURENTO_WS = process.env.KURENTO_WS;
+        }
     }
     public async ConfigureWebRTC() {
         this.kurento = await kurento(this.KURENTO_WS);
