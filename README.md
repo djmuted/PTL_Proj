@@ -20,6 +20,16 @@ Project for laboratory classes at the Poznan University of Technology.
 - Kmiotek Jarosław
 - Sobański Rafał
 
+## Deployment
+You can easily deploy the project using a docker-compose file.
+```
+cd docker
+docker-compose up
+```
+The default port is 5051, you can change it in the docker-compose.yml file.
+
+## Manual setup
+
 ### __Prerequisites__
 - [Ubuntu 18.04](https://help.ubuntu.com/community/Installation/MinimalCD)
 - [nginx](http://nginx.org/en/linux_packages.html#Ubuntu)
