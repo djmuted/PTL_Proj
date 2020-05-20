@@ -1,53 +1,82 @@
 <template>
-    <section class="section is-paddingless">
-        <div class="box is-paddingless">
-            <div class="card">
+  <section class="section is-paddingless">
+    <div class="box is-paddingless">
+      <div class="card"></div>
 
-            </div>
-
-            <div class="columns small-videos">
-                <SmallVideoBox></SmallVideoBox>
-                <SmallVideoBox></SmallVideoBox>
-                <SmallVideoBox></SmallVideoBox>
-            </div>
-        </div>
-    </section>
+      <div class="columns small-videos">
+        <SmallVideoBox
+          v-for="(vid, index) in videos"
+          v-bind:video="vid.video"
+          :key="`video-${index}`"
+        ></SmallVideoBox>
+      </div>
+    </div>
+  </section>
 </template>
 
-<script>
-    import {Component, Prop, Vue} from 'vue-property-decorator'
-    import SmallVideoBox from "@/components/video/SmallVideoBox"
+<script lang="ts">
+import { Component, Prop, Vue } from "vue-property-decorator";
+import SmallVideoBox from "./SmallVideoBox.vue";
+import { KokosClient, KokosEvents } from "ptl-client/src/kokosClient";
+import { ParticipantJoined } from "ptl-client/src/participantJoined";
+import { UserLeftResponse } from "ptl-client/src/messages/userLeftResponse";
 
-    @Component({
-        components: {
-            SmallVideoBox
+@Component({
+  components: {
+    SmallVideoBox
+  },
+  props: ["videos"]
+})
+export default class VideoBox extends Vue {
+  //
+  created() {
+    let kokos: KokosClient = this.$store.state.kokos;
+    kokos.addEventListener(
+      KokosEvents.USER_JOINED,
+      (data: ParticipantJoined) => {
+        //attach the video dom to the view
+        console.log(data);
+        let videoDOM = data.participant.video;
+        let userid = data.participant.userData.id;
+        let username = data.participant.userData.name;
+        this.$props.videos.push({ id: userid, video: videoDOM });
+      }
+    );
+    kokos.addEventListener(KokosEvents.USER_LEFT, (data: UserLeftResponse) => {
+      //remove the user video and label from the view
+      let userid = data.user;
+      for (var vid in this.$props.videos) {
+        if (this.$props.videos[vid].id == userid) {
+          this.$props.videos.splice(vid);
+          break;
         }
-    })
-    export default class VideoBox extends Vue {
-        //
-    }
+      }
+    });
+    this.$props.videos = [];
+  }
+}
 </script>
 
 <style scoped>
-    .section {
-        height: 100%;
-    }
+.section {
+  height: 100%;
+}
 
-    .section .box {
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
+.section .box {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
 
-    .small-videos {
-        position: absolute;
-        bottom: 20px;
-        left: 10px;
-    }
+.small-videos {
+  position: absolute;
+  bottom: 20px;
+  left: 10px;
+}
 
-    .card {
-        display: flex;
-        height: 100%;
-        background: #ccc;
-    }
+.card {
+  display: flex;
+  height: 100%;
+  background: #ccc;
+}
 </style>

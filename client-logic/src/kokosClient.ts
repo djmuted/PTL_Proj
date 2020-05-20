@@ -14,6 +14,7 @@ import { IceCandidateMessage } from './iceCandidateMessage';
 import { ReceiveFeedRequest } from './messages/receiveFeedRequest';
 import { Dispatcher } from './dispatcher';
 import { ParticipantJoined } from './participantJoined';
+import { ChangeNameRequest } from './messages/changeNameRequest';
 
 export const KokosEvents = {
     CHAT_MESSAGE: "chat_message",
@@ -52,7 +53,6 @@ export class KokosClient extends Dispatcher {
             let handler = (data: CreateRoomResponse) => {
                 this.socket.off("create_room", handler);
                 resolve(data);
-                this.dispatchEvent(KokosEvents.USER_JOINED, new ParticipantJoined(this.participants.get(data.owner.id)));
             }
             this.socket.on("create_room", handler);
             this.socket.emit("create_room", {});
@@ -67,9 +67,6 @@ export class KokosClient extends Dispatcher {
             let handler = (data: JoinRoomResponse) => {
                 disableHandlers();
                 resolve(data);
-                for (var participant of this.participants.values()) {
-                    this.dispatchEvent(KokosEvents.USER_JOINED, new ParticipantJoined(participant));
-                }
             }
             let handlerErr = (data: JoinRoomError) => {
                 disableHandlers();
@@ -85,11 +82,18 @@ export class KokosClient extends Dispatcher {
         });
     }
     /**
-     * 
+     * Send a message to the room chat
      * @param message Message to emit
      */
     public Chat(message: string) {
         this.socket.emit("chat_message", new ChatMessageRequest(message));
+    }
+    /**
+     * Changes current user nickname
+     * @param nick New nickname
+     */
+    public ChangeNick(nick: string) {
+        this.socket.emit("change_name", new ChangeNameRequest(nick));
     }
     private HandleServerEvent() {
         this.socket.on("create_room", (data: CreateRoomResponse) => {
@@ -113,6 +117,7 @@ export class KokosClient extends Dispatcher {
                 } else {
                     participant.receiveVideo(this.socket);
                 }
+                this.dispatchEvent(KokosEvents.USER_JOINED, new ParticipantJoined(participant));
             }
         });
         this.socket.on("chat_message", (data: ChatMessageResponse) => {
