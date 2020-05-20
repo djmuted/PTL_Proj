@@ -2,7 +2,7 @@ version: '3'
 services:
   ptl-media:
     build: media
-    network: host
+    network_mode: host
   ptl-db:
     image: redis
     expose:
