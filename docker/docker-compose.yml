@@ -2,8 +2,7 @@ version: '3'
 services:
   ptl-media:
     build: media
-    expose:
-    - "8888"
+    network: host
   ptl-db:
     image: redis
     expose:

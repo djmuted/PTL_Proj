@@ -1,3 +1,5 @@
 FROM kurento/kurento-media-server:latest
-COPY files/WebRtcEndpoint.conf.ini /etc/kurento/modules/kurento/WebRtcEndpoint.conf.ini
+COPY files/install.sh /opt/install.sh
+RUN chmod +x /opt/install.sh && \
+    /opt/install.sh
 ENTRYPOINT ["/entrypoint.sh"]
