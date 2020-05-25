@@ -1,10 +1,10 @@
 <template>
   <div class="container is-fluid contentWrapper">
-    <div class="columns is-variable is-gapeless contentWrapper">
-      <div class="column is-three-quarters">
+    <div class="columns is-gapeless-mobile contentWrapper is-desktop">
+      <div class="column is-two-thirds-desktop videobox">
         <VideoBox></VideoBox>
       </div>
-      <div class="column">
+      <div class="column is-one-third-desktop">
         <ChatBox></ChatBox>
       </div>
     </div>
@@ -30,7 +30,8 @@ export default class VideoChat extends Vue {
   created() {
     let nickPrompt = new NickPrompt();
 
-    this.$store.state.kokos = new KokosClient(window.location.origin); //window.location.origin
+    // this.$store.state.kokos = new KokosClient(window.location.origin); //window.location.origin
+    this.$store.state.kokos = new KokosClient("http://localhost:5000");
     this.kokos = this.$store.state.kokos;
 
     nickPrompt.prompt((value: string) => {
@@ -66,5 +67,11 @@ export default class VideoChat extends Vue {
 <style>
 .contentWrapper {
   height: 100%;
+}
+
+@media only screen and (max-width: 1023px) {
+  .videobox {
+    height: 60%;
+  }
 }
 </style>

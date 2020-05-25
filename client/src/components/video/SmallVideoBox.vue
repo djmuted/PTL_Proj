@@ -11,8 +11,14 @@ import { Component, Prop, Vue } from "vue-property-decorator";
   props: ["video"]
 })
 export default class SmallVideoBox extends Vue {
+  $refs: {
+    vid: HTMLVideoElement;
+  };
+
   mounted() {
     (this.$refs.vid as any).appendChild(this.$props.video);
+    this.$props.video.style.minHeight = "100%";
+    this.$props.video.style.minWidth = "100%";
   }
 }
 </script>
@@ -21,8 +27,8 @@ export default class SmallVideoBox extends Vue {
 .small-video {
   border: 2px solid #fff;
   background: #ddd;
-  height: 100px;
   width: 150px;
+  height: 120px;
 }
 </style>
           
