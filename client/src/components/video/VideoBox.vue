@@ -3,8 +3,9 @@
     <div class="box is-paddingless">
       <div class="card"></div>
 
-      <div class="columns small-videos">
+      <div class="columns is-desktop small-videos">
         <SmallVideoBox
+          class="small-video-box"
           v-for="(vid, index) in videos"
           v-bind:video="vid.video"
           :key="`video-${index}`"
@@ -30,6 +31,8 @@ import { UserLeftResponse } from "ptl-client/src/messages/userLeftResponse";
 export default class VideoBox extends Vue {
   //
   created() {
+    this.$props.videos = [];
+
     let kokos: KokosClient = this.$store.state.kokos;
     kokos.addEventListener(
       KokosEvents.USER_JOINED,
@@ -52,7 +55,6 @@ export default class VideoBox extends Vue {
         }
       }
     });
-    this.$props.videos = [];
   }
 }
 </script>
@@ -78,5 +80,15 @@ export default class VideoBox extends Vue {
   display: flex;
   height: 100%;
   background: #ccc;
+  position: relative;
+}
+
+@media only screen and (max-width: 1023px) {
+  .small-videos {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    left: auto;
+  }
 }
 </style>
