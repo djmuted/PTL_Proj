@@ -30,8 +30,8 @@ export default class VideoChat extends Vue {
   created() {
     let nickPrompt = new NickPrompt();
 
-    this.$store.state.kokos = new KokosClient(window.location.origin); //window.location.origin
-    //this.$store.state.kokos = new KokosClient("http://localhost:5000");
+    // this.$store.state.kokos = new KokosClient(window.location.origin); //window.location.origin
+    this.$store.state.kokos = new KokosClient("http://localhost:5000");
     this.kokos = this.$store.state.kokos;
 
     nickPrompt.prompt((value: string) => {

@@ -12,6 +12,10 @@
         ></SmallVideoBox>
       </div>
     </div>
+    <div class="management-buttons">
+      <b-button v-on:click="buttonClicked" type="is-light" rounded icon-right="microphone"></b-button>
+      <b-button v-on:click="buttonClicked" type="is-light" rounded icon-right="video"></b-button>
+    </div>
   </section>
 </template>
 
@@ -21,7 +25,7 @@ import SmallVideoBox from "./SmallVideoBox.vue";
 import { KokosClient, KokosEvents } from "ptl-client/src/kokosClient";
 import { ParticipantJoined } from "ptl-client/src/participantJoined";
 import { UserLeftResponse } from "ptl-client/src/messages/userLeftResponse";
-
+import { WebRtcPeer } from "kurento-utils";
 @Component({
   components: {
     SmallVideoBox
@@ -30,31 +34,41 @@ import { UserLeftResponse } from "ptl-client/src/messages/userLeftResponse";
 })
 export default class VideoBox extends Vue {
   //
+  rtcPeer: WebRtcPeer;
+  kokosClient: KokosClient;
   created() {
     this.$props.videos = [];
 
-    let kokos: KokosClient = this.$store.state.kokos;
-    kokos.addEventListener(
+    this.kokosClient = this.$store.state.kokos;
+    this.kokosClient.addEventListener(
       KokosEvents.USER_JOINED,
       (data: ParticipantJoined) => {
         //attach the video dom to the view
         console.log(data);
         let videoDOM = data.participant.video;
         let userid = data.participant.userData.id;
+        this.rtcPeer = data.participant.rtcPeer;
         let username = data.participant.userData.name;
         this.$props.videos.push({ id: userid, video: videoDOM });
       }
     );
-    kokos.addEventListener(KokosEvents.USER_LEFT, (data: UserLeftResponse) => {
-      //remove the user video and label from the view
-      let userid = data.user;
-      for (var vid in this.$props.videos) {
-        if (this.$props.videos[vid].id == userid) {
-          this.$props.videos.splice(vid);
-          break;
+    this.kokosClient.addEventListener(
+      KokosEvents.USER_LEFT,
+      (data: UserLeftResponse) => {
+        //remove the user video and label from the view
+        let userid = data.user;
+        for (var vid in this.$props.videos) {
+          if (this.$props.videos[vid].id == userid) {
+            this.$props.videos.splice(vid);
+            break;
+          }
         }
       }
-    });
+    );
+  }
+
+  buttonClicked() {
+    this.kokosClient
   }
 }
 </script>
