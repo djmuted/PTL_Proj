@@ -30,8 +30,6 @@ export class KokosClient extends Dispatcher {
   private socket: SocketIOClient.Socket;
   private user: UserData;
   private participants: Map<string, Participant>;
-  private audioEnabled = true;
-  private cameraEnabled = true;
 
   /**
    * Initialize PTL-Client logic
@@ -97,9 +95,16 @@ export class KokosClient extends Dispatcher {
   public ChangeNick(nick: string) {
     this.socket.emit("change_name", new ChangeNameRequest(nick));
   }
-  public ToggleAudio() {}
+  public toggleAudio() {
+    const participantUser = this.participants.get(this.user.id);
+    participantUser.toggleAudio();
+  }
 
-  public ToggleVideo() {}
+  public toggleVideo() {
+    const participantUser = this.participants.get(this.user.id);
+    participantUser.toggleVideo();
+  }
+
   private HandleServerEvent() {
     this.socket.on("create_room", (data: CreateRoomResponse) => {
       //console.log(`room created, id: ${data.id}`);

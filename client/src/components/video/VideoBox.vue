@@ -13,8 +13,8 @@
       </div>
     </div>
     <div class="management-buttons">
-      <b-button v-on:click="buttonClicked" type="is-light" rounded icon-right="microphone"></b-button>
-      <b-button v-on:click="buttonClicked" type="is-light" rounded icon-right="video"></b-button>
+      <b-button v-on:click="toggleAudio" type="is-light" rounded icon-right="microphone"></b-button>
+      <b-button v-on:click="toggleVideo" type="is-light" rounded icon-right="video"></b-button>
     </div>
   </section>
 </template>
@@ -67,8 +67,11 @@ export default class VideoBox extends Vue {
     );
   }
 
-  buttonClicked() {
-    this.kokosClient
+  toggleVideo() {
+    this.kokosClient.toggleVideo();
+  }
+  toggleAudio() {
+    this.kokosClient.toggleAudio();
   }
 }
 </script>
