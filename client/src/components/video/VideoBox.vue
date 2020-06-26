@@ -1,8 +1,17 @@
 <template>
   <section class="section is-paddingless">
     <div class="box is-paddingless">
-      <div class="card"></div>
-
+      <div class="card">
+        <div class="management-buttons">
+          <b-button v-on:click="toggleAudio" type="is-light" rounded>
+            <b-icon :icon="audioIcon" size="is-medium"></b-icon>
+          </b-button>
+          <br />
+          <b-button v-on:click="toggleVideo" type="is-light" rounded>
+            <b-icon :icon="videoIcon" size="is-medium"></b-icon>
+          </b-button>
+        </div>
+      </div>
       <div class="columns is-desktop small-videos">
         <SmallVideoBox
           class="small-video-box"
@@ -11,10 +20,6 @@
           :key="`video-${index}`"
         ></SmallVideoBox>
       </div>
-    </div>
-    <div class="management-buttons">
-      <b-button v-on:click="toggleAudio" type="is-light" rounded icon-right="microphone"></b-button>
-      <b-button v-on:click="toggleVideo" type="is-light" rounded icon-right="video"></b-button>
     </div>
   </section>
 </template>
@@ -33,7 +38,9 @@ import { WebRtcPeer } from "kurento-utils";
   props: ["videos"]
 })
 export default class VideoBox extends Vue {
-  //
+  audioIcon = "microphone";
+  videoIcon = "video";
+
   rtcPeer: WebRtcPeer;
   kokosClient: KokosClient;
   created() {
@@ -69,9 +76,22 @@ export default class VideoBox extends Vue {
 
   toggleVideo() {
     this.kokosClient.toggleVideo();
+    this.toggleVideoIcon();
   }
   toggleAudio() {
     this.kokosClient.toggleAudio();
+    this.toggleAudioIcon();
+  }
+
+  toggleVideoIcon() {
+    this.videoIcon == "video"
+      ? (this.videoIcon = "video-off")
+      : (this.videoIcon = "video");
+  }
+  toggleAudioIcon() {
+    this.audioIcon == "microphone"
+      ? (this.audioIcon = "microphone-off")
+      : (this.audioIcon = "microphone");
   }
 }
 </script>
@@ -100,12 +120,26 @@ export default class VideoBox extends Vue {
   position: relative;
 }
 
+.management-buttons {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+.management-buttons button {
+  margin: 5px 0;
+}
 @media only screen and (max-width: 1023px) {
   .small-videos {
     position: absolute;
     top: 20px;
     right: 20px;
     left: auto;
+  }
+  .management-buttons {
+    top: auto;
+    right: auto;
+    bottom: 10px;
+    left: 10px;
   }
 }
 </style>
