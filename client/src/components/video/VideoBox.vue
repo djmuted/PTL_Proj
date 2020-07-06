@@ -1,8 +1,17 @@
 <template>
   <section class="section is-paddingless">
     <div class="box is-paddingless">
-      <div class="card"></div>
-
+      <div class="card">
+        <div class="management-buttons">
+          <b-button v-on:click="toggleAudio" type="is-light" rounded>
+            <b-icon :icon="audioIcon" size="is-medium"></b-icon>
+          </b-button>
+          <br />
+          <b-button v-on:click="toggleVideo" type="is-light" rounded>
+            <b-icon :icon="videoIcon" size="is-medium"></b-icon>
+          </b-button>
+        </div>
+      </div>
       <div class="columns is-desktop small-videos">
         <SmallVideoBox
           class="small-video-box"
@@ -21,7 +30,7 @@ import SmallVideoBox from "./SmallVideoBox.vue";
 import { KokosClient, KokosEvents } from "ptl-client/src/kokosClient";
 import { ParticipantJoined } from "ptl-client/src/participantJoined";
 import { UserLeftResponse } from "ptl-client/src/messages/userLeftResponse";
-
+import { WebRtcPeer } from "kurento-utils";
 @Component({
   components: {
     SmallVideoBox
@@ -29,32 +38,60 @@ import { UserLeftResponse } from "ptl-client/src/messages/userLeftResponse";
   props: ["videos"]
 })
 export default class VideoBox extends Vue {
-  //
+  audioIcon = "microphone";
+  videoIcon = "video";
+
+  rtcPeer: WebRtcPeer;
+  kokosClient: KokosClient;
   created() {
     this.$props.videos = [];
 
-    let kokos: KokosClient = this.$store.state.kokos;
-    kokos.addEventListener(
+    this.kokosClient = this.$store.state.kokos;
+    this.kokosClient.addEventListener(
       KokosEvents.USER_JOINED,
       (data: ParticipantJoined) => {
         //attach the video dom to the view
         console.log(data);
         let videoDOM = data.participant.video;
         let userid = data.participant.userData.id;
+        this.rtcPeer = data.participant.rtcPeer;
         let username = data.participant.userData.name;
         this.$props.videos.push({ id: userid, video: videoDOM });
       }
     );
-    kokos.addEventListener(KokosEvents.USER_LEFT, (data: UserLeftResponse) => {
-      //remove the user video and label from the view
-      let userid = data.user;
-      for (var vid in this.$props.videos) {
-        if (this.$props.videos[vid].id == userid) {
-          this.$props.videos.splice(vid);
-          break;
+    this.kokosClient.addEventListener(
+      KokosEvents.USER_LEFT,
+      (data: UserLeftResponse) => {
+        //remove the user video and label from the view
+        let userid = data.user;
+        for (var vid in this.$props.videos) {
+          if (this.$props.videos[vid].id == userid) {
+            this.$props.videos.splice(vid);
+            break;
+          }
         }
       }
-    });
+    );
+  }
+
+  toggleVideo() {
+    this.kokosClient.toggleVideo();
+    this.toggleVideoIcon();
+  }
+  toggleAudio() {
+    this.kokosClient.toggleAudio();
+    this.toggleAudioIcon();
+  }
+
+  toggleVideoIcon() {
+    this.videoIcon == "video"
+      ? (this.videoIcon = "video-off")
+      : (this.videoIcon = "video");
+  }
+  toggleAudioIcon() {
+    this.audioIcon == "microphone"
+      ? (this.audioIcon = "microphone-off")
+      : (this.audioIcon = "microphone");
   }
 }
 </script>
@@ -83,12 +120,26 @@ export default class VideoBox extends Vue {
   position: relative;
 }
 
+.management-buttons {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+.management-buttons button {
+  margin: 5px 0;
+}
 @media only screen and (max-width: 1023px) {
   .small-videos {
     position: absolute;
     top: 20px;
     right: 20px;
     left: auto;
+  }
+  .management-buttons {
+    top: auto;
+    right: auto;
+    bottom: 10px;
+    left: 10px;
   }
 }
 </style>

@@ -888,6 +888,11 @@
   resolved "https://registry.yarnpkg.com/@types/javascript-time-ago/-/javascript-time-ago-2.0.1.tgz#819ec39b467409e2fd6acb42bc53ae7d631bbdb0"
   integrity sha512-6QWXsuqzfUMfsg1DTJan/MfUi80LGS1TOohSqxlgpBZEHH344xpl3LzgANTp7PPWf7Z/9S0l14RMQPF0vH7MIg==
 
+"@types/kurento-utils@^6.7.1":
+  version "6.7.1"
+  resolved "https://registry.yarnpkg.com/@types/kurento-utils/-/kurento-utils-6.7.1.tgz#4b22f03701bf14e9a0036953a47539fc80fc5469"
+  integrity sha512-lHt2On3d/UHzhmhkMyb5wm4S5IZLvKbYBQxI3TrxUX5irkerM51y6ukpY5cel5Y2penAPDPrSDXF6CFut2zM8g==
+
 "@types/minimatch@*":
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/@types/minimatch/-/minimatch-3.0.3.tgz#3dca0e3f33b200fc7d1139c0cd96c1268cadfd9d"
@@ -4707,6 +4712,21 @@ kurento-utils@^6.13.1:
   version "6.13.1"
   resolved "https://registry.yarnpkg.com/kurento-utils/-/kurento-utils-6.13.1.tgz#c3d33eff2864a3bc84b8c6cd602d70ce6df25a80"
   integrity sha512-lsVj6UQ5ZgjZ7F3OP4EDCZpk4y8XcNEbockv+R75ZInqEocL28qHZAqPDc8Y6YiTJbgIK8CtheunnFI1gBUfeg==
+  dependencies:
+    freeice "^2.1.2"
+    hark "^1.0.0"
+    inherits "^2.0.0"
+    merge "^1.2.0"
+    sdp-translator "^0.1.15"
+    ua-parser-js "^0.7.7"
+    uuid "^3.0.0"
+  optionalDependencies:
+    kurento-browser-extensions "*"
+
+kurento-utils@^6.14.0:
+  version "6.14.0"
+  resolved "https://registry.yarnpkg.com/kurento-utils/-/kurento-utils-6.14.0.tgz#ea4864f41fb333dd2534cc6a654945752916686f"
+  integrity sha512-xaB6UalZ21HJd9eHmfZqulFkpOh4zaCd068Mdspeky07FIgrO+vPJqXTXWpcRvDbB2SBRczZWsRLa7qfidDl9g==
   dependencies:
     freeice "^2.1.2"
     hark "^1.0.0"
