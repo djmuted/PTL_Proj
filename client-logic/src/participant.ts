@@ -8,8 +8,6 @@ export class Participant {
   public userData: UserData;
   public rtcPeer: kurentoUtils.WebRtcPeer;
   public video: HTMLVideoElement;
-  private audioEnabled = true;
-  private videoEnabled = true;
 
   constructor(_userData: UserData) {
     this.userData = _userData;
@@ -37,6 +35,7 @@ export class Participant {
         this.onIceCandidate(candidate, socket),
       configuration: { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] },
     };
+
     this.rtcPeer = kurentoUtils.WebRtcPeer.WebRtcPeerSendonly(
       options,
       (error) => {
