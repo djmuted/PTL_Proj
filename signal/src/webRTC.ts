@@ -41,6 +41,9 @@ export class WebRTC {
             user.socket.emit('ice_candidate', new IceCandidateMessage(user.id, candidate));
         });
     }
+    public OnLeftRoom(user: User, room: Room) {
+        (user.outgoingMedia as any).release();
+    }
     private getEndpointForUser(user: User, target: string) {
         if (user.id == target) {
             return user.outgoingMedia;
@@ -81,6 +84,7 @@ export class WebRTC {
                     await targetUser.outgoingMedia.connect(endpoint);
                 }
                 let sdpAnswer = await endpoint.processOffer(data.sdp);
+                console.log("sdpa: " + sdpAnswer);
                 user.socket.emit("receive_video_answer", new ReceiveFeedRequest(sdpAnswer, data.target));
                 await endpoint.gatherCandidates();
             }

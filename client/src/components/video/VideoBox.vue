@@ -10,6 +10,10 @@
           <b-button v-on:click="toggleVideo" type="is-light" rounded>
             <b-icon :icon="videoIcon" size="is-medium"></b-icon>
           </b-button>
+          <br />
+          <b-button v-on:click="toggleScreenSharing" type="is-light" rounded>
+            <b-icon :icon="screenshareIcon" size="is-medium"></b-icon>
+          </b-button>
         </div>
       </div>
       <div class="columns is-desktop small-videos">
@@ -33,13 +37,14 @@ import { UserLeftResponse } from "ptl-client/src/messages/userLeftResponse";
 import { WebRtcPeer } from "kurento-utils";
 @Component({
   components: {
-    SmallVideoBox
+    SmallVideoBox,
   },
-  props: ["videos"]
+  props: ["videos"],
 })
 export default class VideoBox extends Vue {
   audioIcon = "microphone";
   videoIcon = "video";
+  screenshareIcon = "cast";
 
   rtcPeer: WebRtcPeer;
   kokosClient: KokosClient;
@@ -82,7 +87,19 @@ export default class VideoBox extends Vue {
     this.kokosClient.toggleAudio();
     this.toggleAudioIcon();
   }
-
+  async toggleScreenSharing() {
+    try {
+      await this.kokosClient.toggleScreenShare();
+      this.toggleScreenSharingIcon();
+    } catch (err) {
+      //user cancelled screensharing dialog, show an error?
+    }
+  }
+  toggleScreenSharingIcon() {
+    this.screenshareIcon == "cast"
+      ? (this.screenshareIcon = "cast-connected")
+      : (this.screenshareIcon = "cast");
+  }
   toggleVideoIcon() {
     this.videoIcon == "video"
       ? (this.videoIcon = "video-off")
