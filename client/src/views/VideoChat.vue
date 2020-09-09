@@ -22,8 +22,8 @@ import v from "validator";
 @Component({
   components: {
     VideoBox,
-    ChatBox
-  }
+    ChatBox,
+  },
 })
 export default class VideoChat extends Vue {
   private kokos: KokosClient;
@@ -31,7 +31,7 @@ export default class VideoChat extends Vue {
     let nickPrompt = new NickPrompt();
 
     this.$store.state.kokos = new KokosClient(window.location.origin); //window.location.origin
-    //this.$store.state.kokos = new KokosClient("http://localhost:5000");
+    //this.$store.state.kokos = new KokosClient("http://localhost:2137");
     this.kokos = this.$store.state.kokos;
 
     nickPrompt.prompt((value: string) => {

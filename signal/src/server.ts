@@ -89,6 +89,7 @@ export class Server {
             let user = new User(uuidv4(), socket);
             socket.on("disconnect", async () => {
                 if (user.room) {
+                    this.webRTC.OnLeftRoom(user, user.room);
                     user.room.users.delete(user.id);
                     this.SendRoom(user.room, "user_left", new UserLeftResponse(user.id));
                     if (!user.room.users.size) {
@@ -127,6 +128,12 @@ export class Server {
             socket.on("chat_message", (data: ChatMessageRequest) => {
                 if (!user.room) return;
                 this.SendRoom(user.room, "chat_message", new ChatMessageResponse(user.id, data.message), user);
+            });
+            socket.on("switch_source", async () => {
+                if (!user.room) return;
+                this.webRTC.OnLeftRoom(user, user.room);
+                await this.webRTC.OnJoinRoom(user, user.room);
+                this.SendRoom(user.room, "switch_source", user.id);
             });
             this.webRTC.ConfigureHandlers(user);
         });

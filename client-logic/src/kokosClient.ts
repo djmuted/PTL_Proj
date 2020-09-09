@@ -104,6 +104,10 @@ export class KokosClient extends Dispatcher {
     const participantUser = this.participants.get(this.user.id);
     participantUser.toggleVideo();
   }
+  private isScreenSharing = false;
+  public async toggleScreenShare() {
+    this.socket.emit("switch_source");
+  }
 
   private HandleServerEvent() {
     this.socket.on("create_room", (data: CreateRoomResponse) => {
@@ -111,7 +115,7 @@ export class KokosClient extends Dispatcher {
       this.participants = new Map<string, Participant>();
       let participant = new Participant(data.owner);
       this.participants.set(data.owner.id, participant);
-      participant.sendVideo(this.socket);
+      participant.sendVideo(this.socket, this.isScreenSharing);
       this.user = data.owner;
       this.dispatchEvent(
         KokosEvents.USER_JOINED,
@@ -126,7 +130,7 @@ export class KokosClient extends Dispatcher {
         let participant = new Participant(userData);
         this.participants.set(userData.id, participant);
         if (participant.userData.id == this.user.id) {
-          participant.sendVideo(this.socket);
+          participant.sendVideo(this.socket, this.isScreenSharing);
         } else {
           participant.receiveVideo(this.socket);
         }
@@ -157,7 +161,8 @@ export class KokosClient extends Dispatcher {
     });
     this.socket.on("user_updated", (data: UserUpdatedResponse) => {
       //console.log(`user ${data.user.id} updated its name: ${data.user.name}.`);
-      this.participants.get(data.user.id).userData = data.user;
+      let participant = this.participants.get(data.user.id);
+      participant.userData = data.user;
       this.dispatchEvent(KokosEvents.USER_UPDATED, data);
     });
     this.socket.on("ice_candidate", (data: IceCandidateMessage) => {
@@ -168,7 +173,17 @@ export class KokosClient extends Dispatcher {
     });
     this.socket.on("receive_video_answer", (data: ReceiveFeedRequest) => {
       //console.log(`receive video from user: ${data.target}.`);
+      console.log(data);
       this.participants.get(data.target).rtcPeer.processAnswer(data.sdp);
+    });
+    this.socket.on("switch_source", async (userid: string) => {
+      let participant = this.participants.get(userid);
+      if (userid == this.user.id) {
+        this.isScreenSharing = !this.isScreenSharing;
+        participant.sendVideo(this.socket, this.isScreenSharing);
+      } else {
+        participant.receiveVideo(this.socket);
+      }
     });
   }
 }

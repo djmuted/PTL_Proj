@@ -17,7 +17,7 @@ export class Participant {
     this.video.autoplay = true;
     this.video.controls = false;
   }
-  public sendVideo(socket: SocketIOClient.Socket) {
+  public async sendVideo(socket: SocketIOClient.Socket, isScreensharing: boolean) {
     let constraints = {
       audio: true,
       video: {
@@ -35,7 +35,10 @@ export class Participant {
         this.onIceCandidate(candidate, socket),
       configuration: { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] },
     };
-
+    if (isScreensharing) {
+      let screenMediastream = await (navigator as any).mediaDevices.getDisplayMedia() as MediaStream;
+      (options as any).videoStream = screenMediastream;
+    }
     this.rtcPeer = kurentoUtils.WebRtcPeer.WebRtcPeerSendonly(
       options,
       (error) => {
