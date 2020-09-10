@@ -9,6 +9,6 @@ cd ..
 cd client-logic
 npm install
 cd ..
-cd client
-yarn install
-yarn build
+cd client-frontend
+npm install
+npm run build
