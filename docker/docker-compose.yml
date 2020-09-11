@@ -2,7 +2,11 @@ version: '3'
 services:
   ptl-media:
     build: media
-    network_mode: host
+    expose:
+      - "8888/tcp"
+      - "0-65535/udp"
+    ports:
+      - "0-65535/udp"
   ptl-db:
     image: redis
     expose:
