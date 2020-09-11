@@ -1,5 +1,6 @@
 import * as kurentoUtils from "kurento-utils";
 import * as io from "socket.io-client";
+import hark from 'hark';
 import { UserData } from "./userData";
 import { IceCandidateMessage } from "./iceCandidateMessage";
 import { ReceiveFeedRequest } from "./messages/receiveFeedRequest";
@@ -8,6 +9,7 @@ export class Participant {
   public userData: UserData;
   public rtcPeer: kurentoUtils.WebRtcPeer;
   public video: HTMLVideoElement;
+  public speechEvents: hark.Harker;
 
   constructor(_userData: UserData) {
     this.userData = _userData;
@@ -36,7 +38,18 @@ export class Participant {
       configuration: { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] },
     };
     if (isScreensharing) {
-      let screenMediastream = await (navigator as any).mediaDevices.getDisplayMedia() as MediaStream;
+      //Add audio to screensharing
+      const gdmOptions = {
+        video: {
+          cursor: "always"
+        },
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100
+        }
+      }
+      let screenMediastream = await (navigator as any).mediaDevices.getDisplayMedia(gdmOptions) as MediaStream;
       (options as any).videoStream = screenMediastream;
     }
     this.rtcPeer = kurentoUtils.WebRtcPeer.WebRtcPeerSendonly(

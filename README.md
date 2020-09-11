@@ -57,8 +57,8 @@ cd ..
 ```
 Download all required packages for the client
 ```
-cd client
-yarn install
+cd client-frontend
+npm install
 cd ..
 ```
 
@@ -74,8 +74,8 @@ cd ..
 ```
 #### Start the client dev webhost
 ```
-cd client
-screen -S web yarn serve
+cd client-frontend
+screen -S web npm start
 ```
 
 #### WARNING: WebRTC does NOT work with unencrypted HTTP. HTTPS with a valid SSL certificate is required in recent Chrome and Firefox versions. The only exception is localhost, which will work with HTTP.

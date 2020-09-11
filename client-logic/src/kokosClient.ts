@@ -1,4 +1,5 @@
 import * as io from "socket.io-client";
+import hark from 'hark';
 import { CreateRoomResponse } from "./messages/createRoomResponse";
 import { JoinRoomResponse } from "./messages/joinRoomResponse";
 import { JoinRoomRequest } from "./messages/joinRoomRequest";
@@ -23,6 +24,8 @@ export const KokosEvents = {
   USER_UPDATED: "user_updated",
   ROOM_JOINED: "join_room",
   ROOM_CREATED: "create_room",
+  USER_START_SPEAKING: "user_start_speaking",
+  USER_STOP_SPEAKING: "user_stop_speaking"
 };
 
 export class KokosClient extends Dispatcher {
@@ -132,7 +135,7 @@ export class KokosClient extends Dispatcher {
         if (participant.userData.id == this.user.id) {
           participant.sendVideo(this.socket, this.isScreenSharing);
         } else {
-          participant.receiveVideo(this.socket);
+          this.ReceiveTrackedStream(participant);
         }
         this.dispatchEvent(
           KokosEvents.USER_JOINED,
@@ -148,7 +151,7 @@ export class KokosClient extends Dispatcher {
       //console.log(`user ${data.user.id} joined.`);
       let participant = new Participant(data.user);
       this.participants.set(data.user.id, participant);
-      participant.receiveVideo(this.socket);
+      this.ReceiveTrackedStream(participant);
       this.dispatchEvent(
         KokosEvents.USER_JOINED,
         new ParticipantJoined(participant)
@@ -182,8 +185,25 @@ export class KokosClient extends Dispatcher {
         this.isScreenSharing = !this.isScreenSharing;
         participant.sendVideo(this.socket, this.isScreenSharing);
       } else {
-        participant.receiveVideo(this.socket);
+        this.ReceiveTrackedStream(participant);
       }
+    });
+  }
+  private ReceiveTrackedStream(participant: Participant) {
+    participant.receiveVideo(this.socket);
+    this.AssignSpeechEvents(participant);
+  }
+  private AssignSpeechEvents(participant: Participant) {
+    //Enable speech events
+    participant.rtcPeer.peerConnection.addEventListener("track", e => {
+      let mediastream = (e as any).streams[0];
+      participant.speechEvents = hark(mediastream);
+      participant.speechEvents.on('speaking', () => {
+        this.dispatchEvent(KokosEvents.USER_START_SPEAKING, participant.userData.id);
+      });
+      participant.speechEvents.on('stopped_speaking', () => {
+        this.dispatchEvent(KokosEvents.USER_STOP_SPEAKING, participant.userData.id);
+      });
     });
   }
 }
