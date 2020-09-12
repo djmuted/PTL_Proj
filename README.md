@@ -3,6 +3,9 @@ A web application that allows real-time video conferencing with desktop sharing.
 
 Project for laboratory classes at the Poznan University of Technology. 
 
+### Documentation
+https://docs.google.com/document/d/1tZM00kalfO37ZPQXomoaGacE_y-1VtwWU_ZVJAtD0js/edit
+
 ### Project architecture
 #### Main architecture
 ![](https://i.imgur.com/lB6CYdL.png "Server architecture")
@@ -12,7 +15,7 @@ Project for laboratory classes at the Poznan University of Technology.
 ### __Technologies__ 
 - WebRTC
 - Typescript
-- Vue
+- jQuery
 
 ### __Maintainers__
 - Dziurzyński Miłosz
